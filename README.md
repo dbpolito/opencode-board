@@ -1,6 +1,10 @@
 # OpenCode Board
 
-A Kanban board for OpenCode Desktop, using native components and theme colors. Targets `@opencode/plugin` 2.2.0; the GUI plugin API is experimental.
+A Kanban board inside OpenCode Desktop. Keep your backlog beside your conversations, write tasks in Markdown, and start a session from a card when you're ready to work on it.
+
+The board is shared across your projects. Each task can have a project and several linked sessions, so you can keep the planning and the conversations together as work moves along.
+
+[npm](https://www.npmjs.com/package/opencode-board) · [GitHub](https://github.com/dbpolito/opencode-board) · [MIT license](LICENSE)
 
 ## Install
 
@@ -13,16 +17,90 @@ Add the package to `plugins` in your global `~/.config/opencode/opencode.jsonc`,
 }
 ```
 
-OpenCode installs the package and loads its Desktop GUI. This plugin does not add a CLI/TUI interface.
+OpenCode installs the package and loads its Desktop GUI. Open a session, then click the Kanban icon beside the card count on the right of the session header.
 
-## Local development setup
+You can also open it through:
+
+- **Kanban: Open task board** in the command palette.
+- `/kanban` in the composer.
+- **Task board** in the side-panel **+** menu.
+
+Drag the board tab below the chat if you want more horizontal room. The header count includes every card, even when the board is filtered. It updates as you add or delete tasks; an ellipsis appears while storage loads.
+
+This plugin is for OpenCode Desktop and does not add a CLI/TUI interface. It targets `@opencode/plugin` 2.2.0. The GUI plugin API is experimental.
+
+## Working with the board
+
+The default columns are Backlog, Ready, In progress, Review, and Done. Add your own columns, rename or recolor them, and drag their titles to change the order. Columns can collapse into narrow rails when you need the space.
+
+Create a card with **New task** or the **+** in a column header. Tasks have a title, Markdown description, labels, a column, and an optional project. Cards show a description excerpt, checklist progress, and the number of linked sessions.
+
+Drag anywhere on a card to reorder it or move it between columns. Changes save when you drop; Escape cancels a drag. Clear the filters before dragging so hidden cards don't make the order ambiguous.
+
+Deleting a task requires confirmation. Deleting a column with tasks asks where to move them, and you can't delete the last column.
+
+### Markdown checklists
+
+Click checkboxes directly in the rendered description. Each click updates the matching `- [ ]` or `- [x]` in the saved Markdown, and the progress count on the card follows it.
+
+The description editor has Write and Preview tabs. Rendering uses OpenCode's Markdown component, so descriptions follow the rest of the app.
+
+### Projects and filters
+
+Use search, labels, or the project filter to narrow the board. **All projects** shows the shared backlog; **No project** shows unassigned tasks.
+
+The project picker lists projects with an open session at their root directory. Worktree tabs are excluded. It uses OpenCode's project display name, with the folder name as a fallback. Closing a project's last root session removes it from the picker but leaves its tasks and assignments alone.
+
+New tasks default to the filtered project. When you're viewing all projects, they default to the currently open project. You can change the assignment or choose no project in the task editor.
+
+## Tasks and sessions
+
+A task can stand on its own or have multiple linked sessions. In task details:
+
+- **Start session** creates a session, links it to the card, and sends the card title and description.
+- **Link current session** adds the conversation you're already in. Duplicate links are ignored.
+- Click a linked session's title to open it. The unlink icon removes that connection from the task.
+
+> **Start session begins work immediately.** It sends the title and description as the prompt, without opening a draft for review.
+
+New sessions run in the task's assigned project and server. A task without a project uses the currently open session's directory and server. Existing session links keep their own server when you change the task's project.
+
+A card's border animates while any of its linked sessions is running. Selecting a card doesn't start the animation. Reduced-motion preferences disable the rotation.
+
+Task status stays manual: a session starting or finishing won't move the card to another column. Deleting a task doesn't delete its sessions. Existing single-session links remain available.
+
+## Task details
+
+Click a card to open its details. The task-layout menu lets you choose how much of the board stays visible:
+
+| Layout | Behavior |
+| --- | --- |
+| Overlay | Details sit over the board. Clicking the backdrop closes them. |
+| Split | The board and details sit side by side. |
+| Full | Details use the board's available content area. |
+
+The same layout applies when creating or editing a task. Overlay and Split widths can be resized and are saved separately. Focus the resize divider to use the arrow keys, Shift for larger steps, Home, or End. Double-click it to reset the width.
+
+The Overlay backdrop covers the task panel, including search and filters. Clicking it closes the details without activating the control underneath. You can still use the prompt composer elsewhere in OpenCode and leave the task open. Task menus and confirmation dialogs remain usable. Split and Full have no backdrop.
+
+The Delete icon sits beside Edit in task details.
+
+## Where your data lives
+
+Cards and view preferences use OpenCode's global plugin storage. They are shared across projects, servers, sessions, and windows in the same local app installation. They survive reloads, but don't sync to other machines.
+
+There is no automatic task clearing or import from former workspace stores. If you used the earlier `opencode-desktop-showcase` package, the plugin imports its global board and layout preferences once, only when `opencode-board` has no saved value yet.
+
+## Development
+
+Build a local copy:
 
 ```sh
 bun install
 bun run build
 ```
 
-Add this directory to `plugins` in your global `~/.config/opencode/opencode.jsonc`, preserving your existing settings:
+To load it, add the local directory to `plugins` in your global `~/.config/opencode/opencode.jsonc` in place of the npm package:
 
 ```jsonc
 {
@@ -33,50 +111,23 @@ Add this directory to `plugins` in your global `~/.config/opencode/opencode.json
 
 Local builds reload the plugin automatically. Use `bun run dev` to rebuild on changes.
 
-## Open the board
-
-In an existing session, click the **Kanban icon and card count** on the right of the session header. The count includes every card in the global board, across projects and servers, and updates as tasks change. An ellipsis appears while storage loads.
-
-You can also use **Kanban: Open task board** in the command palette, `/kanban`, or **Task board** in the side-panel **+** menu. Drag the board tab below the chat for more horizontal room.
-
-## Tasks and columns
-
-- Create tasks from **New task** or the **+** in a column header.
-- Edit titles, Markdown descriptions, labels, and status. Cards show excerpts and checklist progress. Click checkboxes directly in the rendered description to update and save the Markdown (`- [ ]` / `- [x]`).
-- One global board: projects are optional task fields, not separate boards. Assign a project in the editor, then filter by **All projects**, a specific project, or **No project**. Project choices include only projects with open root-directory session tabs, excluding worktree tabs. Labels use OpenCode's project display name, falling back to the folder name when unnamed. Closing a project's last root session removes it from the picker, not from existing tasks. New tasks default to the filtered project, or the currently open project when viewing all projects.
-- Search or filter by label and project. Clear filters before dragging.
-- Drag whole cards to reorder them or move between columns. Drag column titles to reorder columns. Changes save on drop; Escape cancels.
-- Add, rename, recolor, or collapse columns. Deleting a populated column requires moving its tasks; the last column cannot be deleted.
-- Choose **Overlay**, **Split**, or **Full** from the task-layout menu. Overlay and Split widths are resizable and saved separately. The focused resize divider also supports arrows, Shift, Home, End, and double-click reset.
-- A very subtle theme-colored backdrop covers the task panel's content area, including its search and filters, behind an open Overlay. Clicking it closes the Overlay without activating the control underneath. Interacting with the composer or the rest of OpenCode leaves task details open. Task menus and confirmation dialogs stay interactive; Split and Full views have no backdrop.
-
-Session linking is optional, and each task can have multiple linked sessions. **Start session** creates and adds a session, then immediately sends only the card title and description to begin work. **Link current session** adds an existing session without duplicates. Each linked title opens its session; its unlink icon removes only that link. Cards show the session count and animate when any linked session is running. Selection remains static, and reduced-motion preferences disable rotation. Task status is always manual. Existing single-session links remain available.
-
-The Delete icon sits beside Edit in task details. Deleting requires confirmation and does not delete linked sessions.
-
-Starting a session uses the task's assigned project and server. Tasks without a project use the currently open session's directory and server. Linked sessions retain their own server, even when you change a task's project.
-
-## Persistence
-
-The board and view preferences use OpenCode's global plugin storage, shared across projects, servers, sessions, and windows in this local app installation. This does not sync to other machines. Tasks survive reloads; there is no automatic clearing or import from former workspace stores. The package is named `opencode-board`; existing global board data and layout preferences are imported once from the former `opencode-desktop-showcase` namespace when the new namespace has no saved value.
-
-## Development
+Run the checks before submitting a change:
 
 ```sh
 bun run check
 ```
 
-Runs TypeScript checks, builds `dist/gui-experimental.cjs`, and runs board-model, Markdown/checklist, storage, and bundle-registration tests. Tests do not verify Desktop rendering or pointer geometry; check those in OpenCode Desktop.
+This runs TypeScript checks, builds `dist/gui-experimental.cjs`, and runs the board-model, Markdown/checklist, storage, and bundle-registration tests. Desktop rendering and pointer geometry need a manual check in OpenCode Desktop.
 
-Source files live under `src/gui/`: `window.tsx` registers the board, `board-shortcut.tsx` provides the header action, `kanban-storage.ts` shares global storage, and `kanban.tsx`, `task-detail.tsx`, `resizable-detail.tsx`, and `kanban.css` implement the UI.
+The source is under `src/gui/`. `window.tsx` registers the plugin UI, `kanban.tsx` handles the board, and `task-detail.tsx` renders task details. Storage is in `kanban-storage.ts`; the header shortcut is in `board-shortcut.tsx`. Resizing and styles live in `resizable-detail.tsx` and `kanban.css`.
 
-Reference: [OpenCode V2 GUI plugin documentation](https://opencode.ai/v2/docs/build/plugins/gui).
+See the [OpenCode V2 GUI plugin documentation](https://opencode.ai/v2/docs/build/plugins/gui) for the host APIs.
 
 ## Publishing
 
-The `prepublishOnly` hook runs type checks, builds the GUI bundle, and runs the tests before publishing. The package includes the built bundle, README, package metadata, and MIT license.
+The `prepublishOnly` hook runs the checks and builds the GUI before publishing. The npm package contains the built bundle, README, package metadata, and MIT license.
 
-For the first release (`0.1.0`):
+Sign in before publishing:
 
 ```sh
 npm login
