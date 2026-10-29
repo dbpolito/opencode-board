@@ -7,7 +7,7 @@ import * as gui from "@opencode/plugin/gui"
 import * as solid from "solid-js"
 import * as effect from "effect"
 
-const id = "opencode-desktop-showcase"
+const id = "opencode-board"
 
 function load(effects = []) {
   const exports = {}

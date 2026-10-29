@@ -1,4 +1,4 @@
-# OpenCode Task Board
+# OpenCode Board
 
 A Kanban board for OpenCode Desktop, using native components and theme colors. Targets `@opencode/plugin` 2.2.0; the GUI plugin API is experimental.
 
@@ -14,7 +14,7 @@ Add this directory to `plugins` in your global `~/.config/opencode/opencode.json
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugins": ["/absolute/path/to/opencode-plugin"]
+  "plugins": ["/absolute/path/to/opencode-board"]
 }
 ```
 
@@ -45,7 +45,7 @@ Starting a session uses the task's assigned project and server. Tasks without a 
 
 ## Persistence
 
-The board and view preferences use OpenCode's global plugin storage, shared across projects, servers, sessions, and windows in this local app installation. This does not sync to other machines. Tasks survive reloads; there is no automatic clearing or import from former workspace stores. The package's historical name, `opencode-desktop-showcase`, is kept for storage identity; no showcase features remain.
+The board and view preferences use OpenCode's global plugin storage, shared across projects, servers, sessions, and windows in this local app installation. This does not sync to other machines. Tasks survive reloads; there is no automatic clearing or import from former workspace stores. The package is named `opencode-board`; existing global board data and layout preferences are imported once from the former `opencode-desktop-showcase` namespace when the new namespace has no saved value.
 
 ## Development
 

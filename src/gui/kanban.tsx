@@ -25,6 +25,7 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
   const view = createMemo(() => ctx.storage.store("kanban-view-v2", {
     schema: BoardViewSchema, initial: { collapsed: [], mode: "overlay" },
     scope: "global",
+    from: "plugin.opencode-desktop-showcase.kanban-view-v2",
   }))
   const [selected, setSelected] = createSignal<{ id: string; scope: ReturnType<typeof board> }>()
   const selectedTask = () => selected()?.scope === board() ? cards().find((card) => card.id === selected()?.id) : undefined

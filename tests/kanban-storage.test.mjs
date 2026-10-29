@@ -6,6 +6,8 @@ function host() {
   const stores = new Map()
   return { storage: { store(key, options) {
     assert.equal(key, "kanban-v2")
+    assert.equal(options.scope, "global")
+    assert.equal(options.from, "plugin.opencode-desktop-showcase.kanban-v2")
     const scoped = JSON.stringify([key, options.scope])
     if (!stores.has(scoped)) stores.set(scoped, {
       value: structuredClone(options.initial), ready: () => true,

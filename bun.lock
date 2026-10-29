@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "opencode-desktop-showcase",
+      "name": "opencode-board",
       "dependencies": {
         "@dnd-kit/dom": "^0.5.1",
         "@dnd-kit/solid": "^0.5.1",
