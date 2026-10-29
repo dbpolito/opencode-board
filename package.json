@@ -1,7 +1,21 @@
 {
   "name": "opencode-board",
   "version": "0.1.0",
-  "private": true,
+  "description": "A global Kanban task board for OpenCode Desktop",
+  "license": "MIT",
+  "author": "dbpolito",
+  "homepage": "https://github.com/dbpolito/opencode-board#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dbpolito/opencode-board.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dbpolito/opencode-board/issues"
+  },
+  "keywords": ["opencode", "opencode-plugin", "kanban", "tasks", "desktop"],
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "exports": {
     "./gui-experimental": "./dist/gui-experimental.cjs"
@@ -12,7 +26,8 @@
     "dev": "vite build --watch",
     "typecheck": "tsc --noEmit",
     "test": "bun run build && node --test tests/*.test.mjs",
-    "check": "bun run typecheck && bun run test"
+    "check": "bun run typecheck && bun run test",
+    "prepublishOnly": "bun run check"
   },
   "dependencies": {
     "@dnd-kit/dom": "^0.5.1",

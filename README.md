@@ -2,7 +2,20 @@
 
 A Kanban board for OpenCode Desktop, using native components and theme colors. Targets `@opencode/plugin` 2.2.0; the GUI plugin API is experimental.
 
-## Build and load
+## Install
+
+Add the package to `plugins` in your global `~/.config/opencode/opencode.jsonc`, preserving your existing settings:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["opencode-board"]
+}
+```
+
+OpenCode installs the package and loads its Desktop GUI. This plugin does not add a CLI/TUI interface.
+
+## Local development setup
 
 ```sh
 bun install
@@ -58,3 +71,30 @@ Runs TypeScript checks, builds `dist/gui-experimental.cjs`, and runs board-model
 Source files live under `src/gui/`: `window.tsx` registers the board, `board-shortcut.tsx` provides the header action, `kanban-storage.ts` shares global storage, and `kanban.tsx`, `task-detail.tsx`, `resizable-detail.tsx`, and `kanban.css` implement the UI.
 
 Reference: [OpenCode V2 GUI plugin documentation](https://opencode.ai/v2/docs/build/plugins/gui).
+
+## Publishing
+
+The `prepublishOnly` hook runs type checks, builds the GUI bundle, and runs the tests before publishing. The package includes the built bundle, README, package metadata, and MIT license.
+
+For the first release (`0.1.0`):
+
+```sh
+npm login
+npm publish
+```
+
+For subsequent releases, increment the version, validate the package, commit and tag the release, then publish:
+
+```sh
+npm version patch --no-git-tag-version
+npm publish --dry-run
+git add package.json
+git commit -m "Release next version"
+git tag -a "v$(node -p 'require("./package.json").version')" -m "Release"
+git push --follow-tags
+npm publish
+```
+
+## License
+
+[MIT](LICENSE)
