@@ -35,6 +35,7 @@ You can also use **Kanban: Open task board** in the command palette, `/kanban`, 
 - Drag whole cards to reorder them or move between columns. Drag column titles to reorder columns. Changes save on drop; Escape cancels.
 - Add, rename, recolor, or collapse columns. Deleting a populated column requires moving its tasks; the last column cannot be deleted.
 - Choose **Overlay**, **Split**, or **Full** from the task-layout menu. Overlay and Split widths are resizable and saved separately. The focused resize divider also supports arrows, Shift, Home, End, and double-click reset.
+- A very subtle theme-colored backdrop covers the task panel's content area, including its search and filters, behind an open Overlay. Clicking it closes the Overlay without activating the control underneath. Interacting with the composer or the rest of OpenCode leaves task details open. Task menus and confirmation dialogs stay interactive; Split and Full views have no backdrop.
 
 Session linking is optional, and each task can have multiple linked sessions. **Start session** creates and adds a session, then immediately sends only the card title and description to begin work. **Link current session** adds an existing session without duplicates. Each linked title opens its session; its unlink icon removes only that link. Cards show the session count and animate when any linked session is running. Selection remains static, and reduced-motion preferences disable rotation. Task status is always manual. Existing single-session links remain available.
 
@@ -44,7 +45,7 @@ Starting a session uses the task's assigned project and server. Tasks without a 
 
 ## Persistence
 
-The board and view preferences use OpenCode's global plugin storage, shared across projects, servers, sessions, and windows in this local app installation. This does not sync to other machines. Former workspace boards are imported once as you open a session in each workspace, with project assignments and session links preserved. The old stores are left untouched; deleted imported tasks will not reappear. The package's historical name, `opencode-desktop-showcase`, is kept for storage identity; no showcase features remain.
+The board and view preferences use OpenCode's global plugin storage, shared across projects, servers, sessions, and windows in this local app installation. This does not sync to other machines. Tasks survive reloads; there is no automatic clearing or import from former workspace stores. The package's historical name, `opencode-desktop-showcase`, is kept for storage identity; no showcase features remain.
 
 ## Development
 
@@ -54,6 +55,6 @@ bun run check
 
 Runs TypeScript checks, builds `dist/gui-experimental.cjs`, and runs board-model, Markdown/checklist, storage, and bundle-registration tests. Tests do not verify Desktop rendering or pointer geometry; check those in OpenCode Desktop.
 
-Source files live under `src/gui/`: `window.tsx` registers the board, `board-shortcut.tsx` provides the header action, `kanban-storage.ts` shares global storage and imports old boards, and `kanban.tsx`, `task-detail.tsx`, `resizable-detail.tsx`, and `kanban.css` implement the UI.
+Source files live under `src/gui/`: `window.tsx` registers the board, `board-shortcut.tsx` provides the header action, `kanban-storage.ts` shares global storage, and `kanban.tsx`, `task-detail.tsx`, `resizable-detail.tsx`, and `kanban.css` implement the UI.
 
 Reference: [OpenCode V2 GUI plugin documentation](https://opencode.ai/v2/docs/build/plugins/gui).

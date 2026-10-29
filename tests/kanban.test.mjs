@@ -101,6 +101,22 @@ test("dynamic boards load tasks without timestamps and view preferences round-tr
   assert.deepEqual(Schema.decodeUnknownSync(BoardViewSchema)(preferences), preferences)
 })
 
+test("tasks with unnamed projects and explicit undefined optional fields survive save and reload", () => {
+  const tasks = [
+    { ...card, project: { server: "sidecar", directory: "/project", name: undefined }, sessions: [], updatedAt: undefined },
+    { ...card, id: "no-project", project: undefined, sessions: undefined, links: undefined, updatedAt: Date.now() },
+  ]
+  const board = { ...initialBoard(), cards: tasks }
+  const encoded = Schema.encodeSync(BoardSchema)(board)
+  const stored = JSON.parse(JSON.stringify(encoded))
+  const restored = Schema.decodeUnknownSync(BoardSchema)(stored)
+  assert.equal(restored.cards.length, 2)
+  assert.equal(restored.cards[0].project.directory, "/project")
+  assert.equal(restored.cards[0].project.name, undefined)
+  assert.equal(restored.cards[1].project, undefined)
+  assert.equal(restored.cards[1].title, card.title)
+})
+
 test("fresh boards have independent column arrays and accept custom column IDs", () => {
   const first = initialBoard()
   const second = initialBoard()

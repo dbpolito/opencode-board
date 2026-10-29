@@ -2,12 +2,12 @@ import { Command, MenuItem, Panel, Slot, Style, type PanelTab, type Plugin } fro
 import { BoardShortcut } from "./board-shortcut"
 import { Kanban } from "./kanban"
 import { sessionStarter } from "./start-session"
-import { importWorkspaceBoards } from "./kanban-storage"
+import { globalBoard } from "./kanban-storage"
 import css from "./kanban.css?inline"
 
 export const setup: Plugin.Setup = (ctx) => {
-  const start = sessionStarter(ctx)
-  importWorkspaceBoards(ctx)
+  const board = globalBoard(ctx)
+  const start = sessionStarter(ctx, board)
   const open = () => {
     const session = ctx.sessions.current()
     if (session) ctx.layout.open(`${ctx.id}:kanban`, session, { tab: "select" })
@@ -23,7 +23,7 @@ export const setup: Plugin.Setup = (ctx) => {
   ctx.add(Panel, {
     id: "kanban", region: "side", wide: true,
     list: (input) => input.open.includes("kanban") ? [tab] : [],
-    render: (props) => <Kanban session={props.session} start={(task) => start(props.session, task)} />,
+    render: (props) => <Kanban session={props.session} board={board} start={(task) => start(props.session, task)} />,
   })
   ctx.add(MenuItem, (): MenuItem => {
     const session = ctx.sessions.current()
@@ -34,6 +34,6 @@ export const setup: Plugin.Setup = (ctx) => {
   })
   ctx.add(Slot, {
     at: "session.header",
-    render: (props) => <BoardShortcut session={props.session} />,
+    render: (props) => <BoardShortcut session={props.session} board={board} />,
   })
 }

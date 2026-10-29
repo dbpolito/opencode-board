@@ -33,6 +33,7 @@ function windowHost() {
   const opened = []
   const sent = []
   const stores = new Map()
+  let storeCalls = 0
   const session = { id: "session-1", key: "sidecar\nsession-1", server: { id: "sidecar" }, directory: "/project" }
   let current = session
   const ctx = {
@@ -55,15 +56,18 @@ function windowHost() {
       async prompt(input) { sent.push(input) },
     } } }) },
     storage: { store(key, options) {
+      storeCalls++
       const scope = JSON.stringify([key, options.scope])
-      if (!stores.has(scope)) stores.set(scope, { value: structuredClone(options.initial), ready: () => true, update(fn) { fn(this.value) } })
-      return stores.get(scope)
+      // Deliberately return independent handles: the plugin must share its setup-owned store.
+      const store = { value: structuredClone(options.initial), ready: () => true, update(fn) { fn(this.value) } }
+      stores.set(scope, store)
+      return store
     } },
     toast: { show: (input) => calls.push(input) },
   }
   plugin.setup(ctx)
   return {
-    calls, session, created, opened, sent, stores, tick: () => effects.forEach((effect) => effect()), setSession: (value) => { current = value },
+    calls, session, created, opened, sent, stores, storeCalls: () => storeCalls, tick: () => effects.forEach((effect) => effect()), setSession: (value) => { current = value },
     list: (token) => (items.get(token.id) ?? []).map((item) => typeof item === "function" ? item() : item).filter(Boolean),
   }
 }
@@ -80,6 +84,25 @@ test("registers only the board, its launchers, header shortcut, and styles", () 
   }
   assert.equal(load().main, undefined)
   assert.equal(load().stores, undefined)
+})
+
+test("header count and board share one live store across changes and panel remounts", () => {
+  const host = windowHost()
+  const panel = host.list(gui.Panel)[0]
+  const header = host.list(gui.Slot)[0].render({ session: host.session })
+  const board = panel.render({ session: host.session }).props.board
+  assert.equal(header.props.board, board)
+  board.value.cards = Array.from({ length: 5 }, (_, id) => ({ id: String(id) }))
+  host.tick()
+  assert.equal(header.props.board.value.cards.length, 5)
+  board.update((draft) => { draft.cards.push({ id: "new" }) })
+  assert.equal(header.props.board.value.cards.length, 6)
+  host.tick()
+  assert.equal(header.props.board.value.cards.length, 6)
+  assert.equal(panel.render({ session: host.session }).props.board, board)
+  board.update((draft) => { draft.cards = [] })
+  assert.equal(header.props.board.value.cards.length, 0)
+  assert.equal(host.storeCalls(), 1)
 })
 
 test("board command follows the current session and is unavailable on Home", () => {

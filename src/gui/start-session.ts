@@ -1,8 +1,8 @@
 import type { Context, MountedSession } from "@opencode/plugin/gui"
 import { taskPrompt, taskLinks, type Task } from "./kanban-model"
-import { globalBoard } from "./kanban-storage"
+import type { BoardStore } from "./kanban-storage"
 
-export function sessionStarter(ctx: Context) {
+export function sessionStarter(ctx: Context, board: BoardStore) {
   const creating = new Set<string>()
 
   return async (session: MountedSession, task: Task) => {
@@ -14,7 +14,6 @@ export function sessionStarter(ctx: Context) {
     if (creating.has(key)) return
     creating.add(key)
     try {
-      const board = globalBoard(ctx)
       const server = ctx.servers.get(serverID)
       if (!server?.connected) throw new Error("The workspace server is disconnected.")
       // The returned id is authoritative; no draft-tab discovery or prompt matching.

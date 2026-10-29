@@ -7,14 +7,13 @@ import { BoardViewSchema, deleteColumn, matchesTask, moveCard, placeColumn, proj
 import { checklistItems, markdownExcerpt } from "./task-markdown"
 import { TaskDetail } from "./task-detail"
 import { ResizableDetail } from "./resizable-detail"
-import { globalBoard } from "./kanban-storage"
+import type { BoardStore } from "./kanban-storage"
 import { currentTaskProject, openTaskProjects } from "./task-projects"
 
-export function Kanban(props: { session: MountedSession; start(task: Task): Promise<void> }) {
+export function Kanban(props: { session: MountedSession; board: BoardStore; start(task: Task): Promise<void> }) {
   const ctx = usePlugin()
   const ui = ctx.ui
-  const sharedBoard = globalBoard(ctx)
-  const board = () => sharedBoard
+  const board = () => props.board
   const cards = () => board().value?.cards ?? []
   const running = (task: Task) => {
     return taskIsRunning(task, (id, serverID) => {
@@ -183,6 +182,11 @@ export function Kanban(props: { session: MountedSession; start(task: Task): Prom
     </ui.Dialog>)
   }
   return <div ref={root} class="sc-root sc-kanban sc-kanban-ui">
+    <Show when={detailOpen() && (view().value?.mode ?? "overlay") === "overlay"}>
+      <button type="button" class="sc-detail-backdrop" tabIndex={-1} aria-label="Close task details"
+        onPointerDown={(event) => { event.preventDefault(); event.stopPropagation() }}
+        onClick={(event) => { event.stopPropagation(); closeDetail() }} />
+    </Show>
     <header class="sc-board-header">
       <h2>Task board</h2>
       <div class="sc-board-filter"><ui.TextInput class="sc-kanban-input" label="Filter tasks" type="search" placeholder="Search tasks…" value={filter()} onInput={setFilter} disabled={!!dragging()} /></div>
@@ -235,7 +239,12 @@ export function Kanban(props: { session: MountedSession; start(task: Task): Prom
           <div class="sc-column-cards">
             <For each={visibleCards().filter((card) => card.status === column.id)}>{(card, index) => <>
               <Show when={landing()?.anchor === card.id && !landing()?.after}><DropSlot height={dragHeight()} /></Show>
-                <SortableTask card={card} index={index()} disabled={filtered()} active={running(card)} selected={selectedTask()?.id === card.id} origin={dragging() === card.id} originTop={dragTop()} open={() => { if (Date.now() >= suppressClickUntil) { setEditor(undefined); setSelected({ id: card.id, scope: board() }) } }}>
+                <SortableTask card={card} index={index()} disabled={filtered()} active={running(card)} selected={selectedTask()?.id === card.id} origin={dragging() === card.id} originTop={dragTop()} open={() => {
+                  if (Date.now() < suppressClickUntil) return
+                  if (selectedTask()?.id === card.id) return closeDetail()
+                  setEditor(undefined)
+                  setSelected({ id: card.id, scope: board() })
+                }}>
                  <TaskSummary card={card} />
               </SortableTask>
               <Show when={landing()?.anchor === card.id && landing()?.after}><DropSlot height={dragHeight()} /></Show>

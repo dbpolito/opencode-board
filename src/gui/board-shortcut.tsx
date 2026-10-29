@@ -1,11 +1,10 @@
 import { usePlugin, type MountedSession } from "@opencode/plugin/gui"
-import { globalBoard } from "./kanban-storage"
+import type { BoardStore } from "./kanban-storage"
 
-export function BoardShortcut(props: { session: MountedSession }) {
+export function BoardShortcut(props: { session: MountedSession; board: BoardStore }) {
   const ctx = usePlugin()
   const ui = ctx.ui
-  const board = globalBoard(ctx)
-  const count = () => board.ready() ? board.value?.cards.length : undefined
+  const count = () => props.board.ready() ? props.board.value?.cards.length : undefined
   const label = () => count() === undefined ? "Open task board" : `Open task board · ${count()} ${count() === 1 ? "card" : "cards"}`
 
   return <span class="sc-root sc-board-shortcut"><ui.Tooltip value={label()}>

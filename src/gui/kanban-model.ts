@@ -8,7 +8,7 @@ export const columns = [
   { id: "done", title: "Done", color: "var(--v2-state-fg-success)" },
 ] as const
 
-export const TaskProjectSchema = Schema.Struct({ server: Schema.String, directory: Schema.String, name: Schema.optionalKey(Schema.String) })
+export const TaskProjectSchema = Schema.Struct({ server: Schema.String, directory: Schema.String, name: Schema.optional(Schema.String) })
 export type TaskProject = typeof TaskProjectSchema.Type
 export const SessionLinkSchema = Schema.Struct({ server: Schema.String, id: Schema.String })
 export type SessionLink = typeof SessionLinkSchema.Type
@@ -20,14 +20,14 @@ export const CardSchema = Schema.Struct({
   labels: Schema.String,
   status: Schema.String,
   session: Schema.String,
-  sessions: Schema.optionalKey(Schema.Array(Schema.String)),
-  links: Schema.optionalKey(Schema.Array(SessionLinkSchema)),
-  project: Schema.optionalKey(TaskProjectSchema),
-  updatedAt: Schema.optionalKey(Schema.Number),
+  sessions: Schema.optional(Schema.Array(Schema.String)),
+  links: Schema.optional(Schema.Array(SessionLinkSchema)),
+  project: Schema.optional(TaskProjectSchema),
+  updatedAt: Schema.optional(Schema.Number),
 })
 export const ColumnSchema = Schema.Struct({ id: Schema.String, title: Schema.String, color: Schema.String })
 export type Column = typeof ColumnSchema.Type
-export const BoardSchema = Schema.Struct({ cards: Schema.Array(CardSchema), columns: Schema.Array(ColumnSchema), imports: Schema.optionalKey(Schema.Array(Schema.String)) })
+export const BoardSchema = Schema.Struct({ cards: Schema.Array(CardSchema), columns: Schema.Array(ColumnSchema) })
 export type Task = typeof CardSchema.Type
 export type Status = Task["status"]
 export function taskSessions(task: Pick<Task, "session" | "sessions">): string[] {
@@ -71,8 +71,8 @@ export function deleteColumn(board: typeof BoardSchema.Type, id: string, destina
 export const BoardViewSchema = Schema.Struct({
   collapsed: Schema.Array(Schema.String),
   mode: Schema.Literals(["overlay", "split", "full"]),
-  splitWidth: Schema.optionalKey(Schema.Number),
-  overlayWidth: Schema.optionalKey(Schema.Number),
+  splitWidth: Schema.optional(Schema.Number),
+  overlayWidth: Schema.optional(Schema.Number),
 })
 export type DetailMode = typeof BoardViewSchema.Type.mode
 
