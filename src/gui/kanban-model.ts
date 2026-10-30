@@ -108,5 +108,5 @@ export function moveCard<T extends Task>(cards: readonly T[], id: string, status
 }
 
 export function taskPrompt(card: Task): string {
-  return [card.title, card.description].filter(Boolean).join("\n\n")
+  return [`Work on board task "${card.title}" (task_id: ${card.id}). Mark checkboxes as you complete.`, card.description].filter(Boolean).join("\n\n")
 }

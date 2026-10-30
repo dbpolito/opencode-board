@@ -11,7 +11,7 @@ npm version patch --no-git-tag-version
 npm publish --dry-run
 ```
 
-The `prepublishOnly` hook runs type checks, builds the GUI, and runs the tests. The package should contain the built bundle, README, package metadata, and MIT license.
+The `prepublishOnly` hook runs type checks, builds the GUI/server/RPC entries, and runs the tests. The package should contain `dist/gui-experimental.cjs`, `dist/server.js`, `dist/rpc.js`, the README, package metadata, and MIT license.
 
 Check the board in OpenCode Desktop too. The automated tests do not cover Desktop rendering or pointer interactions.
 

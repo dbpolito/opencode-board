@@ -64,9 +64,12 @@ test("same-column and unknown-card drops leave ordering intact", () => {
   assert.equal(columns.length, 5)
 })
 
-test("task prompts contain only the title and description", () => {
-  assert.equal(taskPrompt(card), "Build board\n\nKeep tasks per workspace")
-  assert.equal(taskPrompt({ ...card, description: "" }), "Build board")
+test("task prompts identify the board task and request checklist updates before the unchanged description", () => {
+  const instruction = 'Work on board task "Build board" (task_id: one). Mark checkboxes as you complete.'
+  assert.equal(taskPrompt(card), `${instruction}\n\nKeep tasks per workspace`)
+  assert.equal(taskPrompt({ ...card, description: "" }), instruction)
+  const description = "- [ ] First\n- [x] Second\n\nKeep this **Markdown**."
+  assert.equal(taskPrompt({ ...card, description }), `${instruction}\n\n${description}`)
 })
 
 test("cards can be reordered within a column in either direction", () => {

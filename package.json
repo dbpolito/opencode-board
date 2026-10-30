@@ -1,6 +1,6 @@
 {
   "name": "opencode-board",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A global Kanban task board for OpenCode Desktop",
   "license": "MIT",
   "author": "dbpolito",
@@ -18,12 +18,15 @@
   },
   "type": "module",
   "exports": {
+    ".": "./dist/server.js",
+    "./rpc": "./dist/rpc.js",
     "./gui-experimental": "./dist/gui-experimental.cjs"
   },
   "files": ["dist"],
   "scripts": {
-    "build": "vite build",
-    "dev": "vite build --watch",
+    "build": "vite build && bun run build:server",
+    "build:server": "bun build src/server.ts src/rpc.ts --target=node --external '@opencode/*' --outdir dist",
+    "dev": "bun run build:server && vite build --watch",
     "typecheck": "tsc --noEmit",
     "test": "bun run build && node --test tests/*.test.mjs",
     "check": "bun run typecheck && bun run test",

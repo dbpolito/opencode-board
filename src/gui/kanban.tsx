@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, onCleanup, type JSX } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from "solid-js"
 import { DragDropProvider, DragOverlay, PointerSensor, useDroppable, type DragDropProviderProps } from "@dnd-kit/solid"
 import { PointerActivationConstraints } from "@dnd-kit/dom"
 import { isSortable, useSortable } from "@dnd-kit/solid/sortable"
@@ -9,6 +9,7 @@ import { TaskDetail } from "./task-detail"
 import { ResizableDetail } from "./resizable-detail"
 import type { BoardStore } from "./kanban-storage"
 import { currentTaskProject, openTaskProjects } from "./task-projects"
+import { animateCardMoves } from "./card-motion"
 
 export function Kanban(props: { session: MountedSession; board: BoardStore; start(task: Task): Promise<void> }) {
   const ctx = usePlugin()
@@ -230,7 +231,7 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
         onDragMove={(event) => preview(event.operation, event.to ?? event.operation.position.current)}
         onDragEnd={finish}>
       <div class="sc-board-workspace" data-mode={view().value?.mode ?? "overlay"} data-detail={detailOpen()} style={{ "--sc-board-bottom": `${boardBottom()}px` }}>
-      <div ref={observeBoardHeight} class="sc-board-columns" style={{ "grid-template-columns": displayColumns().map((column) => collapsed(column.id) ? "44px" : "minmax(240px, 1fr)").join(" ") }}>
+      <div ref={(element) => { observeBoardHeight(element); onMount(() => { if (root) onCleanup(animateCardMoves(root, element)) }) }} class="sc-board-columns" style={{ "grid-template-columns": displayColumns().map((column) => collapsed(column.id) ? "44px" : "minmax(240px, 1fr)").join(" ") }}>
         <For each={displayColumns()}>{(column, index) => <DropColumn status={column.id} index={index()} disabled={filtered()} active={landing()?.status === column.id} collapsed={collapsed(column.id)}>{(handleRef) => <>
           <Show when={!collapsed(column.id)} fallback={<><ui.Tooltip value={`Expand ${column.title}`}><ui.IconButton icon="chevron-right" label={`Expand ${column.title}`} variant="ghost" size="small" onClick={() => toggleColumn(column.id)} /></ui.Tooltip><button ref={handleRef} type="button" class="sc-column-rail sc-column-drag" aria-label={`Drag ${column.title} column`}>{column.title}</button><span class="sc-column-count">{cards().filter((card) => card.status === column.id).length}</span></>}>
            <header><button ref={handleRef} type="button" class="sc-column-drag" aria-label={`Drag ${column.title} column`}><span class="sc-column-dot" style={{ background: column.color }} /><span>{column.title}</span><span class="sc-column-count">{cards().filter((card) => card.status === column.id).length}</span></button>

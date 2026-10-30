@@ -41,7 +41,9 @@ New tasks default to the filtered project. When you're viewing all projects, the
 
 ## Linked sessions
 
-**Start session** creates a session, links it to the card, and immediately sends the card title and description as the prompt. It does not open a draft for review.
+**Start session** creates a session, links it to the card, and immediately sends a short instruction with the task title and ID, followed by its description. The instruction asks the agent to mark checkboxes as it completes them; the `board_update` tool explains how to save each change. It does not open a draft for review.
+
+The new session inherits the launching conversation's selected provider, model, and variant instead of picking a server default. If the conversation has no stored selection, the plugin uses its last assistant message's model; without either, it asks you to select a model first. The target server must support that model and have working credentials.
 
 New sessions run in the task's assigned project and server. A task without a project uses the currently open session's directory and server. Existing session links keep their own server when you change the task's project.
 

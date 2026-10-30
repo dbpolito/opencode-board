@@ -49,6 +49,7 @@
 }
 .sc-root .sc-drop-slot { flex-shrink: 0; border: 1px dashed var(--v2-border-border-focus); border-radius: 6px; background: var(--v2-state-bg-info); opacity: .5; }
 .sc-root .sc-task-overlay { box-shadow: var(--v2-elevation-floating); pointer-events: none; }
+.sc-root .sc-card-motion-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
 .sc-root .sc-task:not([data-selected="true"]):not([data-active="true"]):hover { border-color: var(--v2-border-border-strong); background: var(--v2-background-bg-layer-01); }
 .sc-root .sc-task[data-active="true"]:hover { background: var(--v2-background-bg-layer-01); }
 .sc-root .sc-task[data-selected="true"]:hover { background: color-mix(in srgb, var(--sc-card-selection) 94%, var(--sc-card-accent)); }
