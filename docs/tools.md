@@ -10,7 +10,7 @@ The plugin adds nine tools to OpenCode conversations. You can ask things like:
 
 ## Availability
 
-**Settings → OpenCode Board → Enable agent tools** controls all nine tools and defaults to on. Turning it off removes the tools from connected servers and blocks new calls from older tool snapshots. Re-enabling restores them without a restart. The preference is saved globally in Desktop and mirrored to each connected server so it survives server restarts. Disconnected servers receive changes when Desktop reconnects.
+**Settings → Board → Enable agent tools** controls all nine tools and defaults to on. Turning it off removes the tools from connected servers and blocks new calls from older tool snapshots. Re-enabling restores them without a restart. The preference is saved globally in Desktop and mirrored to each connected server so it survives server restarts. Disconnected servers receive changes when Desktop reconnects.
 
 The board UI remains usable when tools are disabled. Already-running sessions and waits are not automatically stopped, but agents can no longer use board tools to update checklists while they are disabled.
 

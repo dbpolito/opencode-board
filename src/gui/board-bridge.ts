@@ -32,7 +32,7 @@ export function connectBoardTools(ctx: Context, board: BoardStore, launch: Sessi
               let error: string | undefined
               try {
                 if (!board.value) throw new Error("Board storage is not ready")
-                if (settings.value?.toolsEnabled === false) throw new Error("OpenCode Board agent tools are disabled in Settings.")
+                if (settings.value?.toolsEnabled === false) throw new Error("Board agent tools are disabled in Settings.")
                 const request = delivery.request
                 if (request.operation === "wait") {
                   const task = board.value.cards.find((card) => card.id === request.input.task_id)

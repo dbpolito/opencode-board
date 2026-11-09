@@ -236,6 +236,7 @@ function windowHost(bridge, sessionAPI = { async wait() {}, async context() { re
     add(token, item) { const list = items.get(token.id) ?? []; list.push(item); items.set(token.id, list) },
     layout: {
       open: (...args) => calls.push(args), state: () => "closed",
+      settings: (page) => calls.push({ settings: page }),
       draft: () => { throw new Error("Starting must not depend on a draft tab") },
     },
     tabs: { open: (...args) => opened.push(args) },
@@ -274,7 +275,7 @@ test("registers the board, launchers, settings page, header shortcut, and styles
   assert.equal(host.list(gui.Style).length, 1)
   assert.deepEqual(host.list(gui.Slot).map((slot) => slot.at), ["session.header"])
   assert.equal(host.list(gui.SettingsPage).length, 1)
-  assert.equal(host.list(gui.SettingsPage)[0].title, "OpenCode Board")
+  assert.equal(host.list(gui.SettingsPage)[0].title, "Board")
   assert.equal(host.list(gui.SettingsPage)[0].render({}).props.settings.value.toolsEnabled, true)
   for (const token of [gui.TitlebarItem, gui.ComposerPill, gui.Server, gui.LinkHandler]) {
     assert.equal(host.list(token).length, 0)
@@ -288,6 +289,23 @@ test("settings bundle uses OpenCode's native settings header, card, and row slot
   for (const name of ["settings-tab-header", "settings-tab-title", "settings-tab-body--sectioned", "settings-list", "settings-row-copy", "settings-row-title", "settings-row-description", "settings-row-control"]) {
     assert.ok(bundle.includes(name), `Missing native settings layout: ${name}`)
   }
+})
+
+test("Board uses one name for its launchers and its settings cog opens the registered page", () => {
+  const host = windowHost()
+  const panel = host.list(gui.Panel)[0]
+  assert.equal(host.list(gui.Command)[0].title, "Board")
+  assert.equal(host.list(gui.Command)[0].slash.name, "board")
+  assert.equal(host.list(gui.MenuItem)[0].title, "Board")
+  assert.equal(panel.list({ open: ["kanban"] })[0].title, "Board")
+  panel.render({ session: host.session }).props.openSettings()
+  assert.equal(host.calls.at(-1).settings, host.list(gui.SettingsPage)[0].id)
+})
+
+test("Board bundle includes a settings cog and footer using the package version", () => {
+  const bundle = readFileSync(new URL("../dist/gui-experimental.cjs", import.meta.url), "utf8")
+  const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"))
+  for (const name of ["settings-gear", "Board settings", "sc-board-footer", "Board version", version]) assert.ok(bundle.includes(name), `Missing Board chrome: ${name}`)
 })
 
 test("header count and board share one live store across changes and panel remounts", () => {

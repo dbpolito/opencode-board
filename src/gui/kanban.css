@@ -12,7 +12,9 @@
 .sc-kanban-ui .sc-kanban-input { width: 100%; min-width: 0; }
 .sc-root .sc-board-header { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0; overflow-x: auto; padding: 2px; }
 .sc-root .sc-board-header > :not(.sc-board-filter) { flex-shrink: 0; }
-.sc-root .sc-board-header h2 { margin: 0 8px 0 0; white-space: nowrap; }
+.sc-root .sc-board-heading { display: flex; align-items: center; gap: 4px; }
+.sc-root .sc-board-header h2 { white-space: nowrap; }
+.sc-root .sc-board-footer { display: flex; justify-content: flex-end; flex-shrink: 0; margin-top: -8px; color: var(--v2-text-text-faint); font-size: 11px; line-height: 16px; font-variant-numeric: tabular-nums; }
 .sc-root .sc-board-new { margin-left: auto; }
 .sc-root .sc-board-workspace { position: relative; display: flex; flex: 1; min-height: 200px; min-width: 0; overflow: hidden; }
 .sc-root .sc-board-columns { display: grid; gap: 12px; flex: 1; min-height: 0; min-width: 0; overflow-x: auto; padding-bottom: 8px; }

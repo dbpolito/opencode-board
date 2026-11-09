@@ -5,7 +5,7 @@ export function BoardShortcut(props: { session: MountedSession; board: BoardStor
   const ctx = usePlugin()
   const ui = ctx.ui
   const count = () => props.board.ready() ? props.board.value?.cards.length : undefined
-  const label = () => count() === undefined ? "Open task board" : `Open task board · ${count()} ${count() === 1 ? "card" : "cards"}`
+  const label = () => count() === undefined ? "Open Board" : `Open Board · ${count()} ${count() === 1 ? "card" : "cards"}`
 
   return <span class="sc-root sc-board-shortcut"><ui.Tooltip value={label()}>
     <ui.Button size="small" variant="ghost-muted" aria-label={label()}

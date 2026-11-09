@@ -2,6 +2,7 @@ import { Schema } from "effect"
 import { usePlugin, type Context } from "@opencode/plugin/gui"
 
 export const SettingsSchema = Schema.Struct({ toolsEnabled: Schema.Boolean })
+export const boardSettingsPage = "board"
 
 export function boardSettings(ctx: Pick<Context, "storage">) {
   return ctx.storage.store("settings-v1", { schema: SettingsSchema, initial: { toolsEnabled: true }, scope: "global" })
@@ -14,8 +15,8 @@ export function BoardSettings(props: { settings: SettingsStore }) {
     <div class="settings-tab-header">
       <div class="settings-tab-header-row">
         <div class="flex flex-col gap-1">
-          <h2 class="settings-tab-title">OpenCode Board</h2>
-          <span class="text-11-regular text-v2-text-text-muted">Manage how agents interact with your task board.</span>
+          <h2 class="settings-tab-title">Board</h2>
+          <span class="text-11-regular text-v2-text-text-muted">Manage how agents interact with Board.</span>
         </div>
       </div>
     </div>

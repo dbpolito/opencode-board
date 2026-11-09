@@ -37,14 +37,14 @@ export default Plugin.define({
           description: `${definition.description} Requires OpenCode Desktop open and connected.`,
           input: { type: "object", properties: definition.properties, required: [...definition.required], additionalProperties: false },
           execute: async (input, context) => {
-            if (!settings.enabled) throw new Error("OpenCode Board agent tools are disabled in Settings.")
+            if (!settings.enabled) throw new Error("Board agent tools are disabled in Settings.")
             if (operation !== "list" && operation !== "get" && operation !== "wait") {
               await ctx.permission.assert({ sessionID: context.sessionID, agent: context.agent, source: { type: "tool", messageID: context.messageID, id: context.id }, action: operation === "start_session" ? "board_start_session" : operation === "remove" ? "board_remove" : "board_update", resources: [String((input as Record<string, unknown>).task_id ?? "new")], save: ["*"] })
             }
             const origin = operation === "start_session" ? await sessionOrigin(ctx.session, context.sessionID) : undefined
             const timeout = (input as Record<string, unknown>).timeout_seconds ?? 120
             if (operation === "wait" && (typeof timeout !== "number" || !Number.isInteger(timeout) || timeout < 1 || timeout > 3600)) throw new Error("timeout_seconds must be an integer between 1 and 3600")
-            if (!settings.enabled) throw new Error("OpenCode Board agent tools are disabled in Settings.")
+            if (!settings.enabled) throw new Error("Board agent tools are disabled in Settings.")
             const result = await queue.request({ operation, input, sessionID: context.sessionID, ...(origin ?? {}) }, context.signal, operation === "wait" ? { concurrent: true, timeout: Number(timeout) * 1000 + 15_000 } : {})
             return { content: JSON.stringify(result) }
           },

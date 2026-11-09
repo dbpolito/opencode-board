@@ -4,7 +4,7 @@ import { Kanban } from "./kanban"
 import { sessionLauncher, sessionStarter } from "./start-session"
 import { globalBoard } from "./kanban-storage"
 import { connectBoardTools } from "./board-bridge"
-import { BoardSettings, boardSettings } from "./settings"
+import { BoardSettings, boardSettings, boardSettingsPage } from "./settings"
 import css from "./kanban.css?inline"
 
 export const setup: Plugin.Setup = (ctx) => {
@@ -20,25 +20,25 @@ export const setup: Plugin.Setup = (ctx) => {
 
   ctx.add(Style, css)
   ctx.add(SettingsPage, {
-    id: "board", title: "OpenCode Board", icon: "checklist",
+    id: boardSettingsPage, title: "Board", icon: "checklist",
     entries: [{ id: "tools", title: "Enable agent tools", keywords: "board tasks kanban tools agents" }],
     render: () => <BoardSettings settings={settings} />,
   })
   ctx.add(Command, (): Command => ({
-    id: "kanban", title: "Kanban: Open task board", keywords: "tasks board project kanban global",
-    featured: true, enabled: !!ctx.sessions.current(), slash: { name: "kanban" }, run: open,
+    id: "kanban", title: "Board", keywords: "open tasks board project kanban global",
+    featured: true, enabled: !!ctx.sessions.current(), slash: { name: "board" }, run: open,
   }))
 
-  const tab: PanelTab = { id: "kanban", title: "Task board", closable: "compact", fallback: true }
+  const tab: PanelTab = { id: "kanban", title: "Board", closable: "compact", fallback: true }
   ctx.add(Panel, {
     id: "kanban", region: "side", wide: true,
     list: (input) => input.open.includes("kanban") ? [tab] : [],
-    render: (props) => <Kanban session={props.session} board={board} start={(task) => start(props.session, task)} />,
+    render: (props) => <Kanban session={props.session} board={board} start={(task) => start(props.session, task)} openSettings={() => ctx.layout.settings(boardSettingsPage)} />,
   })
   ctx.add(MenuItem, (): MenuItem => {
     const session = ctx.sessions.current()
     return {
-      menu: "session.panel", id: "kanban", title: "Task board", icon: "layout-right", keybind: `${ctx.id}.kanban`,
+      menu: "session.panel", id: "kanban", title: "Board", icon: "layout-right", keybind: `${ctx.id}.kanban`,
       opened: !!session && ctx.layout.state(`${ctx.id}:kanban`, session) !== "closed", run: open,
     }
   })

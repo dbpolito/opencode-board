@@ -10,8 +10,9 @@ import { ResizableDetail } from "./resizable-detail"
 import type { BoardStore } from "./kanban-storage"
 import { currentTaskProject, openTaskProjects } from "./task-projects"
 import { animateCardMoves } from "./card-motion"
+import { version } from "../../package.json"
 
-export function Kanban(props: { session: MountedSession; board: BoardStore; start(task: Task): Promise<void> }) {
+export function Kanban(props: { session: MountedSession; board: BoardStore; start(task: Task): Promise<void>; openSettings(): void }) {
   const ctx = usePlugin()
   const ui = ctx.ui
   const board = () => props.board
@@ -190,7 +191,10 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
         onClick={(event) => { event.stopPropagation(); closeDetail() }} />
     </Show>
     <header class="sc-board-header">
-      <h2>Task board</h2>
+      <div class="sc-board-heading">
+        <h2>Board</h2>
+        <ui.Tooltip value="Board settings"><ui.IconButton icon="settings-gear" label="Board settings" variant="ghost" size="small" onClick={props.openSettings} /></ui.Tooltip>
+      </div>
       <div class="sc-board-filter"><ui.TextInput class="sc-kanban-input" label="Filter tasks" type="search" placeholder="Search tasks…" value={filter()} onInput={setFilter} disabled={!!dragging()} /></div>
       <ui.Menu label={label() || "All labels"} trigger="button" disabled={!!dragging()} items={[{ label: "All labels", onSelect: () => setLabel("") }, ...labels().map((name) => ({ label: name, onSelect: () => setLabel(name) }))]} />
       <ui.Menu label={projectFilter() === "none" ? "No project" : projectTitle(projects().find((item) => projectKey(item) === projectFilter()) ?? { server: "", directory: "All projects" })} trigger="button" disabled={!!dragging()} items={[
@@ -288,6 +292,7 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
       </DragDropProvider>
       }}</Show>
     </Show>
+    <footer class="sc-board-footer" aria-label={`Board version ${version}`}>v{version}</footer>
   </div>
 }
 
