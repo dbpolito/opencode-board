@@ -26,16 +26,16 @@ export function bindCardMenu(menu: HTMLElement, close: () => void, restoreFocus:
   }
   const scroll = (event: Event) => { if (!menu.contains(event.target as Node)) close() }
   menu.addEventListener("keydown", keydown)
-  doc.addEventListener("pointerdown", outside, true)
+  doc.addEventListener("pointerdown", outside, { capture: true })
   doc.addEventListener("focusin", outside)
-  doc.addEventListener("scroll", scroll, true)
+  doc.addEventListener("scroll", scroll, { capture: true })
   win?.addEventListener("resize", close)
   items()[0]?.focus()
   return () => {
     menu.removeEventListener("keydown", keydown)
-    doc.removeEventListener("pointerdown", outside, true)
+    doc.removeEventListener("pointerdown", outside, { capture: true })
     doc.removeEventListener("focusin", outside)
-    doc.removeEventListener("scroll", scroll, true)
+    doc.removeEventListener("scroll", scroll, { capture: true })
     win?.removeEventListener("resize", close)
   }
 }
