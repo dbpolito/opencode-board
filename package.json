@@ -1,6 +1,6 @@
 {
   "name": "opencode-board",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A global Kanban task board for OpenCode Desktop",
   "license": "MIT",
   "author": "dbpolito",
