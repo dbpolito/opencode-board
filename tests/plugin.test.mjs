@@ -226,13 +226,21 @@ function windowHost(bridge, sessionAPI = { async wait() {}, async context() { re
   const created = []
   const opened = []
   const sent = []
+  const dialogs = []
   const stores = new Map()
   let storeCalls = 0
   const session = { id: "session-1", key: "sidecar\nsession-1", server: { id: "sidecar" }, directory: "/project" }
   let current = session
   const ctx = {
     id,
-    sessions: { current: () => current },
+    sessions: { current: () => current, list: () => current ? [current] : [] },
+    dialogs: { open(render) {
+      const entry = { closed: false }
+      const handle = { close: () => { entry.closed = true } }
+      entry.content = render(handle)
+      dialogs.push(entry)
+      return handle
+    } },
     add(token, item) { const list = items.get(token.id) ?? []; list.push(item); items.set(token.id, list) },
     layout: {
       open: (...args) => calls.push(args), state: () => "closed",
@@ -241,7 +249,8 @@ function windowHost(bridge, sessionAPI = { async wait() {}, async context() { re
     },
     tabs: { open: (...args) => opened.push(args) },
     screen: { current: () => { throw new Error("Starting a session must not write to the composer") } },
-    servers: { list: () => bridge ? ["sidecar"] : [], get: (serverID) => ({ connected: true, id: serverID, client: { rpc: () => bridge, session: { async get() { return { location: { directory: "/project" }, model: sourceModel } }, ...sessionAPI } }, data: { session: {
+    servers: { list: () => bridge ? ["sidecar"] : [], get: (serverID) => ({ connected: true, id: serverID, client: { rpc: () => bridge, session: { async get() { return { location: { directory: "/project" }, model: sourceModel } }, ...sessionAPI } }, data: { project: { list: () => [] }, session: {
+      get(id) { return { id, title: `Conversation ${id}` } },
       create(input) {
         let resolve, reject
         const request = new Promise((yes, no) => { resolve = yes; reject = no })
@@ -262,7 +271,7 @@ function windowHost(bridge, sessionAPI = { async wait() {}, async context() { re
   }
   plugin.setup(ctx)
   return {
-    calls, session, created, opened, sent, logs, stores, timers, storeCalls: () => storeCalls, tick: () => effects.forEach((effect) => effect()), setSession: (value) => { current = value },
+    calls, session, created, opened, sent, dialogs, logs, stores, timers, storeCalls: () => storeCalls, tick: () => effects.forEach((effect) => effect()), setSession: (value) => { current = value },
     list: (token) => (items.get(token.id) ?? []).map((item) => typeof item === "function" ? item() : item).filter(Boolean),
   }
 }
@@ -306,6 +315,152 @@ test("Board bundle includes a settings cog and footer using the package version"
   const bundle = readFileSync(new URL("../dist/gui-experimental.cjs", import.meta.url), "utf8")
   const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"))
   for (const name of ["settings-gear", "Board settings", "sc-board-footer", "Board version", version]) assert.ok(bundle.includes(name), `Missing Board chrome: ${name}`)
+})
+
+test("compact board typography excludes native Markdown in descriptions and previews", () => {
+  const css = readFileSync(new URL("../src/gui/kanban.css", import.meta.url), "utf8")
+  const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{[^{}]*\}/g)].map((match) => match[1].trim())
+  const typography = rules.filter((selector) => /^\.sc-(root|kanban-ui) (h[23]|:is\((h2|p))/.test(selector))
+  assert.equal(typography.length, 4)
+  for (const selector of typography) assert.ok(selector.includes(':not(:where([data-component="markdown"] *))'), selector)
+  assert.match(css, /\.sc-root \.sc-detail-toolbar \{[^}]*flex-shrink: 0/)
+  assert.match(css, /\.sc-root \.sc-detail-body \{[^}]*min-height: 0; overflow: auto/)
+})
+
+test("header New Task opens a blank form and cancellation does not create a task or session", () => {
+  const host = windowHost()
+  const header = host.list(gui.Slot)[0].render({ session: host.session })
+  header.props.createTask(false)
+  const dialog = host.dialogs[0]
+  assert.equal(dialog.content.props.linked, false)
+  assert.equal(dialog.content.props.initialTitle, "")
+  assert.equal(dialog.content.props.project.directory, "/project")
+  assert.equal(header.props.board.value.cards.length, 0)
+  dialog.content.props.cancel()
+  assert.equal(dialog.closed, true)
+  assert.equal(header.props.board.value.cards.length, 0)
+  assert.equal(host.created.length, 0)
+  assert.equal(host.sent.length, 0)
+})
+
+test("session task modal opens immediately, generates a description, and links the captured session only on save", async () => {
+  let resolve, request, signal
+  const host = windowHost(undefined, { generate(input, options) {
+    request = input
+    signal = options.signal
+    return new Promise((done) => { resolve = done })
+  } })
+  const header = host.list(gui.Slot)[0].render({ session: host.session })
+  header.props.createTask(true)
+  const dialog = host.dialogs[0]
+  const form = dialog.content.props
+  assert.equal(form.linked, true)
+  assert.equal(form.initialTitle, "Conversation session-1")
+  assert.equal(form.sessionTitle, "Conversation session-1")
+  assert.equal(form.description.value, "")
+  assert.equal(form.description.loading, true)
+  assert.equal(request.sessionID, "session-1")
+  assert.match(request.prompt, /concise task description in Markdown/)
+  assert.equal(signal.aborted, false)
+  assert.equal(form.status, "backlog")
+  assert.equal(header.props.board.value.cards.length, 0)
+  host.setSession({ ...host.session, id: "different-session", server: { id: "remote" }, directory: "/other" })
+  const fields = { title: "Follow up", description: "- [ ] Work", labels: "follow-up", status: "ready", project: { server: "remote", directory: "/assigned" } }
+  form.save(fields)
+  assert.equal(dialog.closed, false)
+  assert.equal(header.props.board.value.cards.length, 0)
+  resolve({ text: " Generated description " })
+  await new Promise(setImmediate)
+  assert.equal(form.description.loading, false)
+  assert.equal(form.description.value, "Generated description")
+  form.description.onInput("Edited description")
+  assert.equal(form.description.value, "Edited description")
+  form.save(fields)
+  assert.equal(dialog.closed, true)
+  const task = header.props.board.value.cards[0]
+  assert.equal(task.title, "Follow up")
+  assert.equal(task.status, "ready")
+  assert.equal(task.project.server, "remote")
+  assert.deepEqual(Array.from(task.links, (link) => [link.server, link.id]), [["sidecar", "session-1"]])
+  form.save(fields)
+  assert.equal(header.props.board.value.cards.length, 1)
+  assert.equal(host.list(gui.Panel)[0].render({ session: host.session }).props.board.value.cards.length, 1)
+  assert.equal(host.created.length, 0)
+  assert.equal(host.sent.length, 0)
+})
+
+test("ordinary task modal saves without a link and rejects deleted columns", () => {
+  const host = windowHost()
+  const header = host.list(gui.Slot)[0].render({ session: host.session })
+  const board = header.props.board
+  header.props.createTask(false)
+  const dialog = host.dialogs[0]
+  const fields = { title: "Standalone", description: "", labels: "", status: "backlog" }
+  const columns = board.value.columns
+  board.update((draft) => { draft.columns = [] })
+  dialog.content.props.save(fields)
+  assert.equal(dialog.closed, false)
+  assert.equal(board.value.cards.length, 0)
+  assert.equal(host.calls.at(-1).title, "Could not create task")
+  board.update((draft) => { draft.columns = columns })
+  dialog.content.props.save(fields)
+  assert.equal(dialog.closed, true)
+  assert.equal(board.value.cards.length, 1)
+  assert.equal(board.value.cards[0].links.length, 0)
+})
+
+test("failed or empty generation unlocks manual editing and allows unlinking before save", async () => {
+  for (const fails of [false, true]) {
+    const host = windowHost(undefined, { async generate() {
+      if (fails) throw new Error("Disconnected")
+      return { text: "  " }
+    } })
+    const header = host.list(gui.Slot)[0].render({ session: host.session })
+    header.props.createTask(true)
+    await new Promise(setImmediate)
+    const dialog = host.dialogs[0]
+    assert.equal(dialog.content.props.description.value, "")
+    assert.equal(dialog.content.props.description.loading, false)
+    assert.equal(host.calls.at(-1).title, "Could not generate task description")
+    assert.equal(header.props.board.value.cards.length, 0)
+    dialog.content.props.save({ title: "Unlinked", description: "", labels: "", status: "backlog" }, false)
+    assert.equal(header.props.board.value.cards[0].links.length, 0)
+    assert.equal(host.created.length, 0)
+    assert.equal(host.sent.length, 0)
+  }
+})
+
+test("closing a generating task modal aborts only its generation and ignores late results", async () => {
+  for (const dismiss of ["cancel", "dispose"]) {
+    let resolve, signal
+    const host = windowHost(undefined, { generate(input, options) {
+      signal = options.signal
+      return new Promise((done) => { resolve = done })
+    } })
+    const header = host.list(gui.Slot)[0].render({ session: host.session })
+    header.props.createTask(true)
+    const form = host.dialogs[0].content.props
+    form[dismiss]()
+    assert.equal(signal.aborted, true)
+    resolve({ text: "Late result" })
+    await new Promise(setImmediate)
+    assert.equal(form.description.value, "")
+    form.save({ title: "Late save", description: "", labels: "", status: "backlog" })
+    assert.equal(header.props.board.value.cards.length, 0)
+    assert.equal(host.calls.length, 0)
+    assert.equal(host.created.length, 0)
+    assert.equal(host.sent.length, 0)
+  }
+})
+
+test("header task creation waits for storage readiness and includes all dropdown actions", () => {
+  const host = windowHost()
+  const header = host.list(gui.Slot)[0].render({ session: host.session })
+  header.props.board.ready = () => false
+  header.props.createTask(true)
+  assert.equal(host.dialogs.length, 0)
+  const bundle = readFileSync(new URL("../dist/gui-experimental.cjs", import.meta.url), "utf8")
+  for (const action of ["Open Board", "New Task", "New Task from this Session"]) assert.ok(bundle.includes(action))
 })
 
 test("header count and board share one live store across changes and panel remounts", () => {

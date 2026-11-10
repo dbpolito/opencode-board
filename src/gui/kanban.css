@@ -1,14 +1,14 @@
 /* Scope every selector: never restyle the host application's UI. */
 .sc-root { color: inherit; font: inherit; }
-.sc-root h2, .sc-root h3, .sc-root p { margin: 0; }
+/* UI chrome is compact; rendered Markdown keeps the host's type scale and flow spacing. */
+.sc-root :is(h2, h3, p):not(:where([data-component="markdown"] *)) { margin: 0; }
 .sc-root .sc-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.sc-root.sc-board-shortcut { display: inline-flex; align-items: center; }
-.sc-root .sc-board-count { font-variant-numeric: tabular-nums; }
+.sc-root.sc-board-shortcut { display: inline-flex; align-items: center; font-variant-numeric: tabular-nums; }
 .sc-root.sc-kanban-ui { color: var(--v2-text-text-base); font-family: var(--v2-font-family-sans); font-size: 13px; line-height: 1.5; }
 .sc-root.sc-kanban { position: relative; isolation: isolate; height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 16px; gap: 16px; overflow: hidden; background: var(--v2-background-bg-base); container-type: inline-size; }
-.sc-kanban-ui h2 { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: normal; }
-.sc-kanban-ui h3 { font-size: 12px; font-weight: 500; line-height: 20px; }
-.sc-kanban-ui p, .sc-kanban-ui small { color: var(--v2-text-text-muted); opacity: 1; font-size: 12px; line-height: 20px; }
+.sc-kanban-ui h2:not(:where([data-component="markdown"] *)) { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: normal; }
+.sc-kanban-ui h3:not(:where([data-component="markdown"] *)) { font-size: 12px; font-weight: 500; line-height: 20px; }
+.sc-kanban-ui :is(p, small):not(:where([data-component="markdown"] *)) { color: var(--v2-text-text-muted); opacity: 1; font-size: 12px; line-height: 20px; }
 .sc-kanban-ui .sc-kanban-input { width: 100%; min-width: 0; }
 .sc-root .sc-board-header { display: flex; align-items: center; gap: 8px; flex-shrink: 0; min-width: 0; overflow-x: auto; padding: 2px; }
 .sc-root .sc-board-header > :not(.sc-board-filter) { flex-shrink: 0; }
@@ -40,6 +40,10 @@
 .sc-root button.sc-task { width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; touch-action: none; user-select: none; }
 .sc-root button.sc-task:active { cursor: grabbing; }
 .sc-root button.sc-task:focus-visible { outline: 2px solid var(--v2-border-border-focus); outline-offset: 1px; }
+.sc-root .sc-card-menu { position: absolute; z-index: 5; display: flex; flex-direction: column; gap: 2px; width: 172px; max-width: calc(100% - 8px); padding: 4px; border: 1px solid var(--v2-border-border-base); border-radius: 8px; background: var(--v2-background-bg-layer-01); box-shadow: var(--v2-elevation-floating); }
+.sc-root .sc-card-menu button { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border: 0; border-radius: 4px; background: transparent; color: var(--v2-text-text-base); font: inherit; text-align: left; cursor: pointer; }
+.sc-root .sc-card-menu button:hover, .sc-root .sc-card-menu button:focus-visible { background: var(--v2-overlay-simple-overlay-hover); outline: none; }
+.sc-root .sc-card-menu .sc-card-menu-remove { color: var(--v2-state-fg-danger); }
 .sc-root .sc-task[data-selected="true"] { border-color: var(--sc-card-selection-border); background: var(--sc-card-selection); box-shadow: 0 0 0 1px var(--sc-card-ring); }
 .sc-root .sc-task[data-active="true"] { border-color: color-mix(in srgb, var(--sc-card-accent), var(--v2-border-border-base) 45%); }
 .sc-root .sc-task[data-active="true"][data-selected="true"] { border-color: var(--sc-card-selection-border); box-shadow: 0 0 0 1px var(--sc-card-ring), 0 0 16px color-mix(in srgb, var(--sc-card-accent), transparent 85%); }
@@ -88,12 +92,20 @@
 .sc-root .sc-detail-resizer > span { width: 3px; height: 32px; border-radius: 999px; background: transparent; pointer-events: none; transition: background 85ms ease-out; }
 .sc-root .sc-detail-resizer:hover > span, .sc-root .sc-detail-resizer:focus-visible > span, .sc-root .sc-detail-shell[data-resizing="true"] .sc-detail-resizer > span { background: var(--v2-border-border-focus); }
 .sc-root .sc-detail-shell[data-resizing="true"] { user-select: none; }
-.sc-root .sc-detail-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--v2-border-border-muted); color: var(--v2-text-text-muted); font-size: 12px; }
-.sc-root .sc-detail-body { overflow: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+.sc-root .sc-detail-toolbar { display: flex; flex-shrink: 0; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--v2-border-border-muted); color: var(--v2-text-text-muted); font-size: 12px; }
+.sc-root .sc-detail-body { flex: 1; min-height: 0; overflow: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+.sc-root .sc-detail-summary { display: flex; flex-direction: column; gap: 12px; }
+.sc-root .sc-detail-info { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--v2-text-text-muted); font-size: 12px; line-height: 20px; overflow-wrap: anywhere; }
+.sc-root .sc-detail-info time { color: var(--v2-text-text-faint); }
 .sc-root .sc-detail-title { display: flex; align-items: start; gap: 12px; }
 .sc-root .sc-detail-title h2 { flex: 1; font-size: 18px; line-height: 26px; overflow-wrap: anywhere; }
+.sc-root .sc-detail-remove button { color: var(--v2-state-fg-danger); }
 .sc-root .sc-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .sc-root .sc-detail-section { display: flex; flex-direction: column; gap: 12px; padding-top: 16px; border-top: 1px solid var(--v2-border-border-muted); overflow-wrap: anywhere; }
+.sc-root .sc-detail-section > h3 { color: var(--v2-text-text-muted); }
+.sc-root .sc-task-markdown, .sc-root .sc-markdown-preview { min-width: 0; }
+.sc-root .sc-task-detail .sc-linked-session { padding: 8px; border: 1px solid var(--v2-border-border-muted); border-radius: 6px; background: var(--v2-background-bg-layer-01); }
+.sc-root .sc-task-detail .sc-linked-session > :first-child { min-width: 0; flex: 1; }
 .sc-root .sc-task-markdown input[type="checkbox"] { accent-color: var(--v2-text-text-accent); }
 .sc-root .sc-task-markdown input[type="checkbox"]:enabled { cursor: pointer; }
 .sc-root .sc-task-markdown input[type="checkbox"]:focus-visible { outline: 2px solid var(--v2-border-border-focus); outline-offset: 2px; }

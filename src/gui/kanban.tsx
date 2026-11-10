@@ -3,14 +3,16 @@ import { DragDropProvider, DragOverlay, PointerSensor, useDroppable, type DragDr
 import { PointerActivationConstraints } from "@dnd-kit/dom"
 import { isSortable, useSortable } from "@dnd-kit/solid/sortable"
 import { usePlugin, type MountedSession } from "@opencode/plugin/gui"
-import { BoardViewSchema, deleteColumn, matchesTask, moveCard, placeColumn, projectKey, projectTitle, taskIsRunning, taskLabels, taskLinks, type Column, type Status, type Task, type TaskProject } from "./kanban-model"
+import { BoardViewSchema, deleteColumn, matchesTask, moveCard, placeColumn, projectKey, projectTitle, taskIsRunning, taskLabels, taskLinks, type Column, type Status, type Task } from "./kanban-model"
 import { checklistItems, markdownExcerpt } from "./task-markdown"
 import { TaskDetail } from "./task-detail"
+import { TaskEditor } from "./task-editor"
 import { ResizableDetail } from "./resizable-detail"
 import type { BoardStore } from "./kanban-storage"
 import { currentTaskProject, openTaskProjects } from "./task-projects"
 import { animateCardMoves } from "./card-motion"
 import { version } from "../../package.json"
+import { bindCardMenu, cardMenuPosition } from "./card-menu"
 
 export function Kanban(props: { session: MountedSession; board: BoardStore; start(task: Task): Promise<void>; openSettings(): void }) {
   const ctx = usePlugin()
@@ -69,6 +71,17 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
     onCleanup(() => observer.disconnect())
   }
   let root: HTMLDivElement | undefined
+  const [cardMenu, setCardMenu] = createSignal<{ id: string; x: number; y: number; trigger: HTMLButtonElement }>()
+  const closeCardMenu = () => setCardMenu(undefined)
+  const openCardMenu = (card: Task, event: MouseEvent | KeyboardEvent) => {
+    if (dragging() || draggingColumn()) return
+    event.preventDefault()
+    event.stopPropagation()
+    const trigger = event.currentTarget as HTMLButtonElement
+    const bounds = trigger.getBoundingClientRect()
+    const point = "clientX" in event && (event.clientX || event.clientY) ? { x: event.clientX, y: event.clientY } : { x: bounds.left, y: bounds.bottom }
+    setCardMenu({ id: card.id, ...point, trigger })
+  }
   let dragBoard: ReturnType<typeof board> | undefined
   let suppressClickUntil = 0
   const preview = (operation: Parameters<NonNullable<DragDropProviderProps["onDragOver"]>>[0]["operation"], point = operation.position.current) => {
@@ -147,6 +160,7 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
     setLanding(undefined)
   }
   const visibleCards = () => cards().filter((card) => matchesTask(card, filter(), label(), projectFilter()))
+  createEffect(() => { const menu = cardMenu(); if (menu && !visibleCards().some((card) => card.id === menu.id)) closeCardMenu() })
   const move = (id: string, status: Status) => {
     board().update((draft) => { if (!draft.columns.some((column) => column.id === status)) return; draft.cards = moveCard(draft.cards, id, status); const task = draft.cards.find((item) => item.id === id); if (task) task.updatedAt = Date.now() })
   }
@@ -245,7 +259,8 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
           <div class="sc-column-cards">
             <For each={visibleCards().filter((card) => card.status === column.id)}>{(card, index) => <>
               <Show when={landing()?.anchor === card.id && !landing()?.after}><DropSlot height={dragHeight()} /></Show>
-                <SortableTask card={card} index={index()} disabled={filtered()} active={running(card)} selected={selectedTask()?.id === card.id} origin={dragging() === card.id} originTop={dragTop()} open={() => {
+                 <SortableTask card={card} index={index()} disabled={filtered()} active={running(card)} selected={selectedTask()?.id === card.id} origin={dragging() === card.id} originTop={dragTop()} contextMenu={(event) => openCardMenu(card, event)} open={() => {
+                   closeCardMenu()
                   if (Date.now() < suppressClickUntil) return
                   if (selectedTask()?.id === card.id) return closeDetail()
                   setEditor(undefined)
@@ -292,6 +307,15 @@ export function Kanban(props: { session: MountedSession; board: BoardStore; star
       </DragDropProvider>
       }}</Show>
     </Show>
+    <Show when={cardMenu()} keyed>{(menu) => <CardMenu x={menu.x} y={menu.y} close={closeCardMenu} restoreFocus={() => menu.trigger.focus()} edit={() => {
+      const task = cards().find((card) => card.id === menu.id)
+      closeCardMenu()
+      if (task) edit(task)
+    }} remove={() => {
+      const task = cards().find((card) => card.id === menu.id)
+      closeCardMenu()
+      if (task) void remove(task)
+    }} />}</Show>
     <footer class="sc-board-footer" aria-label={`Board version ${version}`}>v{version}</footer>
   </div>
 }
@@ -309,7 +333,7 @@ function DropColumn(props: { status: Status; index: number; disabled: boolean; a
   return <section ref={(element) => { drop.ref(element); sortable.ref(element) }} class="sc-board-column" data-column-dragging={sortable.isDragSource()} data-kanban-column={props.status} data-collapsed={props.collapsed} data-over={props.active}>{props.children(sortable.handleRef)}</section>
 }
 
-function SortableTask(props: { card: Task; index: number; disabled: boolean; selected: boolean; active: boolean; origin: boolean; originTop: number; open(): void; children: JSX.Element }) {
+function SortableTask(props: { card: Task; index: number; disabled: boolean; selected: boolean; active: boolean; origin: boolean; originTop: number; open(): void; contextMenu(event: MouseEvent | KeyboardEvent): void; children: JSX.Element }) {
   const sortable = useSortable({
     get id() { return props.card.id },
     get index() { return props.index },
@@ -319,10 +343,28 @@ function SortableTask(props: { card: Task; index: number; disabled: boolean; sel
   })
   return <button type="button" ref={(element) => { sortable.ref(element); sortable.handleRef(element) }}
     class="sc-task" data-task-id={props.card.id} data-dragging={props.origin} data-selected={props.selected} data-active={props.active}
-    style={{ "--sc-drag-top": `${props.originTop}px` }} aria-label={`Open ${props.card.title}`} onClick={props.open}>
+    style={{ "--sc-drag-top": `${props.originTop}px` }} aria-label={`Open ${props.card.title}`} aria-haspopup="menu" onClick={props.open} onContextMenu={props.contextMenu} onKeyDown={(event) => {
+      if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) props.contextMenu(event)
+    }}>
     <span class="sc-task-title">{props.card.title}</span>
     {props.children}
   </button>
+}
+
+function CardMenu(props: { x: number; y: number; close(): void; restoreFocus(): void; edit(): void; remove(): void }) {
+  const ui = usePlugin().ui
+  let menu!: HTMLDivElement
+  onMount(() => {
+    const bounds = menu.parentElement!.getBoundingClientRect()
+    const position = cardMenuPosition(props, bounds, menu.getBoundingClientRect())
+    menu.style.left = `${position.x}px`
+    menu.style.top = `${position.y}px`
+    onCleanup(bindCardMenu(menu, props.close, props.restoreFocus))
+  })
+  return <div ref={menu} class="sc-card-menu" role="menu" aria-label="Task actions" onContextMenu={(event) => event.preventDefault()}>
+    <button type="button" role="menuitem" onClick={props.edit}><ui.Icon name="edit" size="small" />Edit task</button>
+    <button type="button" role="menuitem" class="sc-card-menu-remove" onClick={props.remove}><ui.Icon name="trash" size="small" />Remove task</button>
+  </div>
 }
 
 function DropSlot(props: { height: number }) {
@@ -344,32 +386,6 @@ function TaskSummary(props: { card: Task }) {
       </span>
     </span>
   </>
-}
-
-function TaskEditor(props: { existing?: Task; columns: readonly Column[]; projects: readonly TaskProject[]; project?: TaskProject; status: Status; cancel(): void; save(fields: Pick<Task, "title" | "description" | "labels" | "status" | "project">): void }) {
-  const ui = usePlugin().ui
-  const [title, setTitle] = createSignal(props.existing?.title ?? "")
-  const [description, setDescription] = createSignal(props.existing?.description ?? "")
-  const [labels, setLabels] = createSignal(props.existing?.labels ?? "")
-  const [status, setStatus] = createSignal(props.existing?.status ?? props.status)
-  const [project, setProject] = createSignal<TaskProject | undefined>(props.existing ? props.existing.project : props.project)
-  const [preview, setPreview] = createSignal(false)
-  return <form class="sc-task-editor" onSubmit={(event) => {
-    event.preventDefault()
-    if (title().trim()) props.save({ title: title().trim(), description: description().trim(), labels: labels().trim(), status: status(), project: project() })
-  }}>
-    <div class="sc-editor-field"><span>Title</span><ui.TextInput class="sc-kanban-input" label="Title" value={title()} onInput={setTitle} placeholder="What needs to be done?" autofocus /></div>
-    <div class="sc-editor-field"><span>Status</span><ui.Menu label={props.columns.find((column) => column.id === status())?.title ?? "Choose column"} trigger="button" items={props.columns.map((column) => ({ label: column.title, onSelect: () => setStatus(column.id) }))} /></div>
-    <div class="sc-editor-field"><span>Project</span><ui.Menu label={project() ? projectTitle(project()!) : "No project"} trigger="button" items={[
-      { label: "No project", onSelect: () => setProject(undefined) },
-      ...props.projects.map((item) => ({ label: projectTitle(item), onSelect: () => setProject(item) })),
-    ]} /></div>
-    <div class="sc-editor-field"><div class="sc-description-heading"><span>Description</span><div class="sc-actions"><ui.Button size="small" variant={preview() ? "ghost-muted" : "neutral"} onClick={() => setPreview(false)}>Write</ui.Button><ui.Button size="small" variant={preview() ? "neutral" : "ghost-muted"} onClick={() => setPreview(true)}>Preview</ui.Button></div></div>
-      <Show when={preview()} fallback={<textarea aria-label="Description" value={description()} onInput={(event) => setDescription(event.currentTarget.value)} placeholder="Context, acceptance criteria… Markdown and - [ ] checklists supported." />}><div class="sc-markdown-preview"><Show when={description()} fallback={<p>Nothing to preview yet.</p>}><ui.Markdown text={description()} /></Show></div></Show>
-    </div>
-    <div class="sc-editor-field"><span>Labels</span><ui.TextInput class="sc-kanban-input" label="Labels" value={labels()} onInput={setLabels} placeholder="ui, bug, priority" /></div>
-    <div class="sc-editor-actions"><ui.Button type="button" onClick={props.cancel}>Cancel</ui.Button><ui.Button type="submit" variant="contrast" disabled={!title().trim() || !props.columns.some((column) => column.id === status())}>Save task</ui.Button></div>
-  </form>
 }
 
 const columnColors = [

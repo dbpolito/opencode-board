@@ -50,6 +50,8 @@ The GUI entry point is `src/gui.tsx`; `src/server.ts` registers agent tools, and
 | `task-markdown-view.tsx` | Interactive checkboxes in rendered Markdown. |
 | `task-markdown-checkboxes.ts` | Maps rendered checkboxes to Markdown markers. |
 | `board-shortcut.tsx` | Header action and live task count. |
+| `new-task-dialog.tsx` | Header task-creation modal and optional captured-session link. |
+| `task-editor.tsx` | Shared task form used by both the modal and board detail panes. |
 | `resizable-detail.tsx` | Task-pane resizing. |
 | `kanban.css` | Scoped styles using OpenCode theme tokens. |
 

@@ -13,7 +13,19 @@ You can add the package manually to `plugins` in your global `~/.config/opencode
 
 OpenCode installs the package and loads its Desktop GUI.
 
+## Header dropdown
+
+The **Board** dropdown in the session header shows the global task count and three actions:
+
+- **Open Board** opens the board panel.
+- **New Task** opens a blank task form in a modal, defaulting to the current project and first column.
+- **New Task from this Session** opens the same form immediately with the session title prefilled. A read-only model request summarizes the conversation into a task description using the session's selected model. The description shows **Generating…** and is disabled along with Save until the request finishes. You can then edit it before saving. If generation fails, the form unlocks for manual entry. Closing the modal cancels the generation request without interrupting the session. The linked session is shown in the form and can be unlinked before saving. Saving links the original session, even if you switch conversations before saving.
+
+The modal includes title, Markdown description with Write/Preview, labels, project, column, and a **Link current session** toggle (off by default for **New Task**). Cancel closes it without creating anything. Neither creation action starts a session or adds messages to the conversation. **New Task from this Session** does make a model request, which may incur provider usage. The board's own New task and edit actions continue to use its selected detail layout.
+
 ## Tasks and columns
+
+Right-click a task card for **Edit task** and **Remove task**. Removal asks for confirmation and never deletes linked sessions. You can also focus a card and press **Shift+F10** to open the menu; use arrow keys to choose an action or Escape to dismiss it.
 
 The default columns are Backlog, Ready, In progress, Review, and Done. Drag column titles to reorder them. Columns can collapse into narrow rails when you need the space.
 

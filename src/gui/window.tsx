@@ -5,6 +5,7 @@ import { sessionLauncher, sessionStarter } from "./start-session"
 import { globalBoard } from "./kanban-storage"
 import { connectBoardTools } from "./board-bridge"
 import { BoardSettings, boardSettings, boardSettingsPage } from "./settings"
+import { newTaskDialog } from "./new-task-dialog"
 import css from "./kanban.css?inline"
 
 export const setup: Plugin.Setup = (ctx) => {
@@ -13,6 +14,7 @@ export const setup: Plugin.Setup = (ctx) => {
   const launch = sessionLauncher(ctx, board)
   connectBoardTools(ctx, board, launch, settings)
   const start = sessionStarter(ctx, board, launch)
+  const createTask = newTaskDialog(ctx, board)
   const open = () => {
     const session = ctx.sessions.current()
     if (session) ctx.layout.open(`${ctx.id}:kanban`, session, { tab: "select" })
@@ -44,6 +46,6 @@ export const setup: Plugin.Setup = (ctx) => {
   })
   ctx.add(Slot, {
     at: "session.header",
-    render: (props) => <BoardShortcut session={props.session} board={board} />,
+    render: (props) => <BoardShortcut session={props.session} board={board} createTask={(linked) => createTask(props.session, linked)} />,
   })
 }
