@@ -4,6 +4,8 @@
 .sc-root :is(h2, h3, p):not(:where([data-component="markdown"] *)) { margin: 0; }
 .sc-root .sc-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .sc-root.sc-board-shortcut { display: inline-flex; align-items: center; font-variant-numeric: tabular-nums; }
+.sc-root.sc-board-shortcut button { background: transparent; border-color: transparent; box-shadow: none; }
+.sc-root.sc-board-shortcut button:hover { background: var(--v2-background-bg-layer-01); }
 .sc-root.sc-kanban-ui { color: var(--v2-text-text-base); font-family: var(--v2-font-family-sans); font-size: 13px; line-height: 1.5; }
 .sc-root.sc-kanban { position: relative; isolation: isolate; height: 100%; min-height: 0; display: flex; flex-direction: column; padding: 16px; gap: 16px; overflow: hidden; background: var(--v2-background-bg-base); container-type: inline-size; }
 .sc-kanban-ui h2:not(:where([data-component="markdown"] *)) { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: normal; }
